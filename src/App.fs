@@ -30,28 +30,52 @@ let update (command: Command) (state: State) =
     match command with
     | SwitchPage nextPage -> { state with CurrentPage = nextPage }
 
+let MenuItem (text: string, page: Page,  dispatch) = Html.button [
+    prop.text text
+    prop.onClick (fun _ -> dispatch (SwitchPage page))
+]
 
 let render (state: State) (dispatch: Command -> unit) =
     match state.CurrentPage with
     | Home -> 
         Html.div [
-               Html.h1 "OGame"
-               Html.h2 "Clone with F#"
-               Html.input [
-                   prop.placeholder "Username"
-                   //prop.onChange (fun _ -> SetUsernameInput >> dispacth)
-               ]
-               Html.button [
-                   prop.onClick (fun _ -> dispatch (SwitchPage Page.Overview))
-                   prop.text "Start game"
-               ]
-           ]
+            prop.className "wrapper"
+            prop.children [
+                Html.div [
+                    prop.className "wrapper-login"
+                    prop.children [
+                        Html.h1 "OGame"
+                        Html.h2 "Clone with F#"
+                        Html.input [
+                            prop.placeholder "Username"
+                            //prop.onChange (fun _ -> SetUsernameInput >> dispacth)
+                        ]
+                        Html.button [
+                            prop.className "btn btn-primary"
+                            prop.onClick (fun _ -> dispatch (SwitchPage Page.Overview))
+                            prop.text "Start game"
+                        ]
+                    ]
+                ]
+            ]
+        ]
     | Overview ->
         Html.div [
             Html.h1 "Overview"
-            Html.button [
-                prop.text "Building"
-                prop.onClick (fun _ -> dispatch (SwitchPage Page.Building))
+            Html.div [
+                MenuItem ("Building", Page.Building, dispatch)
+                MenuItem ("Research", Page.Research, dispatch)
+                MenuItem ("Shipyard", Page.Shipyard, dispatch)
+                MenuItem ("Defense", Page.Defense, dispatch)
+                MenuItem ("Galaxy", Page.Galaxy, dispatch)
+            ]
+
+            Html.div [
+                Html.div [
+                ]
+                Html.span "1 field"
+                Html.span "[1:0:1] Location"
+                Html.span "-21C to 19C - Temperature"
             ]
         ]
     | Building -> Html.h1 "Building"
