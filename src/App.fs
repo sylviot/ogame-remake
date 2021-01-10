@@ -118,20 +118,39 @@ let update (command: Command) (state: State) =
     | ShipyardBuild -> { state with LightFighterQuantity = state.LightFighterQuantity + 1}, Cmd.none
     | DefenseBuild -> { state with LightLaserTurretQuantity = state.LightLaserTurretQuantity + 1}, Cmd.none
 
-let MenuItem (text: string, page: Page,  dispatch) = Html.button [
+let MenuItem (text: string, page: Page,  dispatch) = Html.div [
+    prop.className "menu-item"
     prop.text text
     prop.onClick (fun _ -> dispatch (SwitchPage page))
 ]
 let Menu (state: State, dispatch) = Html.div [
-    Html.span (sprintf "Metal %d" state.Metal)
-    Html.span (sprintf "Crystal %d" state.Crystal)
-    Html.span (sprintf "Deuterium %d" state.Deuterium)
-    MenuItem ("Overview", Page.Overview, dispatch)
-    MenuItem ("Building", Page.Building, dispatch)
-    MenuItem ("Research", Page.Research, dispatch)
-    MenuItem ("Shipyard", Page.Shipyard, dispatch)
-    MenuItem ("Defense", Page.Defense, dispatch)
-    MenuItem ("Galaxy", Page.Galaxy, dispatch)
+    prop.className "menu"
+    prop.children [
+        MenuItem ("Overview", Page.Overview, dispatch)
+        MenuItem ("Building", Page.Building, dispatch)
+        MenuItem ("Research", Page.Research, dispatch)
+        MenuItem ("Shipyard", Page.Shipyard, dispatch)
+        MenuItem ("Defense", Page.Defense, dispatch)
+        MenuItem ("Galaxy", Page.Galaxy, dispatch)
+    ]
+]
+
+let Info (state: State, dispatch) = Html.div [
+    prop.className "d-flex app"
+    prop.children [
+        Html.span [ 
+            prop.className "d-flex-item"
+            prop.text (sprintf "Metal %d" state.Metal)
+        ]
+        Html.span [
+            prop.className "d-flex-item"
+            prop.text (sprintf "Crystal %d" state.Crystal)
+        ]
+        Html.span [
+            prop.className "d-flex-item"
+            prop.text (sprintf "Deuterium %d" state.Deuterium)
+        ]
+    ]
 ]
 
 // Link: https://dev.to/semuserable/starting-with-fable-f-kbi
@@ -148,6 +167,24 @@ let Menu (state: State, dispatch) = Html.div [
 // client calls
 //window.alert ("Global Fable window.alert")
 //JS.console.log (Browser.document)
+
+let Template (state: State, dispatch: Command -> unit, content) = Html.div [
+    prop.className "d-flex"
+    prop.children [
+        Html.div [
+            prop.className "d-flex-item sidebar-menu"
+            prop.children [ Menu(state, dispatch) ]
+        ]
+        Html.div [
+            prop.className "d-flex-item content"
+            prop.children [ content ]
+        ]
+        Html.div [
+            prop.className "d-flex-item sidebar-info"
+            prop.children [ Info(state, dispatch) ]
+        ]
+    ]
+]
 
 let render (state: State) (dispatch: Command -> unit) =
     match state.CurrentPage with
@@ -177,116 +214,102 @@ let render (state: State) (dispatch: Command -> unit) =
                 ]
             ]
         ]
-    | Page.Overview ->
+    | Page.Overview -> Template(state, dispatch, Html.div [
+        Html.h1 "Overview "
         Html.div [
-            Html.h1 "Overview "
-
-            Menu(state, dispatch)
-
             Html.div [
-                Html.div [
-                ]
-                Html.span "1 field"
-                Html.span "[1:0:1] Location"
-                Html.span "-21C to 19C - Temperature"
+            ]
+            Html.span "1 field"
+            Html.span "[1:0:1] Location"
+            Html.span "-21C to 19C - Temperature"
+        ]
+    ])
+    | Page.Building -> Template(state, dispatch, Html.div [
+        Html.h1 "Building"
+        Html.div [
+            Html.h3 (sprintf "Metal mine %d" state.MetalMineLevel)
+            Html.button [
+                prop.text "Upgrade"
+                prop.disabled state.Building.IsSome
+                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.MetalMine))
             ]
         ]
-    | Page.Building -> 
         Html.div [
-            Html.h1 "Building"
-
-            Menu(state, dispatch)
-            
-            Html.div [
-                Html.h3 (sprintf "Metal mine %d" state.MetalMineLevel)
-                Html.button [
-                    prop.text "Upgrade"
-                    prop.disabled state.Building.IsSome
-                    prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.MetalMine))
-                ]
-            ]
-            Html.div [
-                Html.h3 (sprintf "Crystal mine %d" state.CrystalMineLevel)
-                Html.button [
-                    prop.text "Upgrade"
-                    prop.disabled state.Building.IsSome
-                    prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.CrystalMine))
-                ]
-            ]
-            Html.div [
-                Html.h3 (sprintf "Deuterium mine %d" state.DeuteriumMineLevel)
-                Html.button [
-                    prop.text "Upgrade"
-                    prop.disabled state.Building.IsSome
-                    prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.DeuteriumMine))
-                ]
-            ]
-            Html.div [
-                Html.h3 (sprintf "Research %d" state.ResearchLevel)
-                Html.button [
-                    prop.text "Upgrade"
-                    prop.disabled state.Building.IsSome
-                    prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.Research))
-                ]
-            ]
-            Html.div [
-                Html.h3 (sprintf "Shipyard %d" state.ShipyardLevel)
-                Html.button [
-                    prop.text "Upgrade"
-                    prop.disabled state.Building.IsSome
-                    prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.Shipyard))
-                ]
+            Html.h3 (sprintf "Crystal mine %d" state.CrystalMineLevel)
+            Html.button [
+                prop.text "Upgrade"
+                prop.disabled state.Building.IsSome
+                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.CrystalMine))
             ]
         ]
-    | Page.Research -> 
         Html.div [
-            Html.h1 "Research"
-            Menu(state, dispatch)
-            if state.ResearchLevel > 0 then
-                Html.div [
-                    Html.h3 (sprintf "Spy tecnology %d" state.SpyTecnologyLevel)
-                    Html.button [
-                        prop.text "Research"
-                        //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
-                        prop.onClick (fun _ -> dispatch (ResearchUpgrade Tecnologies.Spy))
-                    ]
-                ]
-            else
-                Html.h2 "O laboratorio nao foi construido"
+            Html.h3 (sprintf "Deuterium mine %d" state.DeuteriumMineLevel)
+            Html.button [
+                prop.text "Upgrade"
+                prop.disabled state.Building.IsSome
+                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.DeuteriumMine))
+            ]
         ]
-    | Page.Shipyard -> 
         Html.div [
-            Html.h1 "Shipyard"
-            Menu(state, dispatch)
-            Html.h1 (sprintf "Shipyard %d" state.ShipyardLevel)
-            if state.ShipyardLevel > 0 then
-                Html.div [
-                    Html.h3 (sprintf "Light Fighter %d" state.LightFighterQuantity)
-                    Html.button [
-                        prop.text "Build"
-                        //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
-                        prop.onClick (fun _ -> dispatch (ShipyardBuild Ships.LightFighter))
-                    ]
-                ]
-            else
-                Html.h2 "Não tem o estaleiro ainda"
+            Html.h3 (sprintf "Research %d" state.ResearchLevel)
+            Html.button [
+                prop.text "Upgrade"
+                prop.disabled state.Building.IsSome
+                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.Research))
+            ]
         ]
-    | Page.Defense -> 
         Html.div [
-            Html.h1 "Defense"
-            Menu(state, dispatch)
-            if state.ShipyardLevel > 0 && state.ResearchLevel > 0 then
-                Html.div [
-                    Html.h3 (sprintf "Light Laser Turret %d" state.LightLaserTurretQuantity)
-                    Html.button [
-                        prop.text "Build"
-                        //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
-                        prop.onClick (fun _ -> dispatch (DefenseBuild Defenses.LightLaserTurret))
-                    ]
-                ]
-            else
-                Html.h2 "Construa um estaleiro e desenvolva tecnologia!"
+            Html.h3 (sprintf "Shipyard %d" state.ShipyardLevel)
+            Html.button [
+                prop.text "Upgrade"
+                prop.disabled state.Building.IsSome
+                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.Shipyard))
+            ]
         ]
+    ])
+    | Page.Research -> Template(state, dispatch, Html.div [
+        Html.h1 "Research"
+        if state.ResearchLevel > 0 then
+            Html.div [
+                Html.h3 (sprintf "Spy tecnology %d" state.SpyTecnologyLevel)
+                Html.button [
+                    prop.text "Research"
+                    //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
+                    prop.onClick (fun _ -> dispatch (ResearchUpgrade Tecnologies.Spy))
+                ]
+            ]
+        else
+            Html.h2 "O laboratorio nao foi construido"
+    ])
+    | Page.Shipyard -> Template(state, dispatch, Html.div [
+        Html.h1 "Shipyard"
+        Html.h1 (sprintf "Shipyard %d" state.ShipyardLevel)
+        if state.ShipyardLevel > 0 then
+            Html.div [
+                Html.h3 (sprintf "Light Fighter %d" state.LightFighterQuantity)
+                Html.button [
+                    prop.text "Build"
+                    //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
+                    prop.onClick (fun _ -> dispatch (ShipyardBuild Ships.LightFighter))
+                ]
+            ]
+        else
+            Html.h2 "Não tem o estaleiro ainda"
+    ])
+    | Page.Defense -> Template(state, dispatch, Html.div [
+        Html.h1 "Defense"
+        if state.ShipyardLevel > 0 && state.ResearchLevel > 0 then
+            Html.div [
+                Html.h3 (sprintf "Light Laser Turret %d" state.LightLaserTurretQuantity)
+                Html.button [
+                    prop.text "Build"
+                    //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
+                    prop.onClick (fun _ -> dispatch (DefenseBuild Defenses.LightLaserTurret))
+                ]
+            ]
+        else
+            Html.h2 "Construa um estaleiro e desenvolva tecnologia!"
+    ])
     | Page.Galaxy -> Html.h1 "Galaxy"
 
 
