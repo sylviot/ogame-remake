@@ -17,7 +17,6 @@ type Page =
     | Defense
     | Galaxy
 
-type Build = { Name: string; Description: string; Level: int; }
 type Builds =
     | MetalMine
     | CrystalMine
@@ -42,82 +41,94 @@ type Ships =
 type Defenses =
     | LightLaserTurret
 
+type Command =
+    | Tick
+    | SwitchPage of Page
+    | BuildingUpgrade of Builds
+    | BuildingUpgraded of Builds
+    | ResearchUpgrade of Tecnologies
+    | ResearchUpgraded of Tecnologies
+    | ShipyardBuild of Ships
+    | DefenseBuild of Defenses
+
 
 type State = { CurrentPage: Page; 
     Metal: int; Crystal: int; Deuterium: int;
     MetalMineLevel: int; CrystalMineLevel: int; DeuteriumMineLevel: int;
     ResearchLevel: int; 
-    SpyTecnologyLevel: int;
+    SpyTecnologyLevel: int; 
+    ArmourTecnologyLevel: int; WeaponTecnologyLevel: int; DefenseTecnologyLevel: int; 
+    LaserTecnologyLevel: int; IonTecnologyLevel: int; PlasmaTecnologyLevel: int; 
+    CombustionTecnologyLevel: int; ImpulsionTecnologyLevel: int;
     ShipyardLevel: int;
     LightFighterQuantity: int;
     LightLaserTurretQuantity: int;
     Building: Builds option; Researching: Tecnologies option; }
 
-type Command =
-    | Tick
-    | SwitchPage of Page
-    | BuildUpgrade of Builds
-    | BuildUpgraded of Builds
-    | ResearchUpgrade of Tecnologies
-    | ShipyardBuild of Ships
-    | DefenseBuild of Defenses
-
 let init() = { 
     CurrentPage = Home;
-    Metal = 0;
-    Crystal = 0;
-    Deuterium = 0;
-    MetalMineLevel =  1;
-    CrystalMineLevel = 1;
-    DeuteriumMineLevel = 1;
+    Metal = 0; Crystal = 0; Deuterium = 0;
+    MetalMineLevel =  1; CrystalMineLevel = 1; DeuteriumMineLevel = 1;
     ResearchLevel = 0;
     SpyTecnologyLevel = 0;
+    ArmourTecnologyLevel = 0; WeaponTecnologyLevel = 0; DefenseTecnologyLevel = 0;
+    LaserTecnologyLevel = 0; IonTecnologyLevel = 0; PlasmaTecnologyLevel = 0;
+    CombustionTecnologyLevel = 0; ImpulsionTecnologyLevel = 0;
     ShipyardLevel = 0;
-    LightFighterQuantity = 0;
-    LightLaserTurretQuantity = 0;
+    LightFighterQuantity = 0; LightLaserTurretQuantity = 0;
     Building = None; Researching = None; }, Cmd.none
 
 let update (command: Command) (state: State) = 
-// ToDo - buildTick pode ser alterado para delayedDispatchCommand -> para receber um Command para dispatch com delay também passado por parametro
-    let buildTick (dispatch: Command -> unit) : unit =
-        let tick = async {
-            do! Async.Sleep 1000
-            dispatch Tick
-        }
-        Async.StartImmediate tick
+// ToDo - delayed pode ser alterado para delayedDispatchCommand -> para receber um Command para dispatch com delay também passado por parametro
+    let delayed (command) (time: int) =
+        let fn (dispatch: Command -> unit): unit = 
+            let tick = async {
+                do! Async.Sleep time
+                dispatch command
+            }
+            Async.StartImmediate tick
+        fn
 
     match command with
     // ToDo -> verificar uma forma de with multiplos atributos de um record
     | Tick -> {state with 
         Metal = state.Metal + 100 + state.MetalMineLevel * 10;
         Crystal = state.Crystal + 100 + state.CrystalMineLevel * 10;
-        Deuterium = state.Deuterium + 100 + state.DeuteriumMineLevel * 10;}, Cmd.ofSub buildTick
+        Deuterium = state.Deuterium + 100 + state.DeuteriumMineLevel * 10;}, Cmd.ofSub (delayed Tick 1000)
     | SwitchPage nextPage ->
         match nextPage with
-        | Overview -> { state with CurrentPage = nextPage }, Cmd.ofSub buildTick
+        | Overview -> { state with CurrentPage = nextPage }, Cmd.ofSub (delayed Tick 1000)
         | _ -> { state with CurrentPage = nextPage }, Cmd.none
-    | BuildUpgraded build ->
+    | BuildingUpgraded build ->
         match build with
         | MetalMine -> { state with MetalMineLevel = state.MetalMineLevel + 1; Building = None }, Cmd.none
         | CrystalMine -> { state with CrystalMineLevel = state.CrystalMineLevel + 1; Building = None }, Cmd.none
         | DeuteriumMine -> { state with DeuteriumMineLevel = state.DeuteriumMineLevel + 1; Building = None }, Cmd.none
         | Research -> { state with ResearchLevel = state.ResearchLevel + 1; Building = None }, Cmd.none
         | Shipyard -> { state with ShipyardLevel = state.ShipyardLevel + 1; Building = None }, Cmd.none
-    | BuildUpgrade build -> 
+    | BuildingUpgrade build -> 
         match state.Building with
-        | None ->
-            let buildingWithTime (dispatch: Command -> unit) : unit =
-                let progress = async {
-                    do! Async.Sleep 1000
-                    dispatch  (BuildUpgraded build)
-                }
-                Async.StartImmediate progress
-            {state with Building = Some build}, Cmd.ofSub buildingWithTime
+        | None -> { state with Building = Some build }, Cmd.ofSub (delayed (BuildingUpgraded build) 1000)
         | Some -> state, Cmd.none
-    | ResearchUpgrade -> {state with SpyTecnologyLevel = state.SpyTecnologyLevel + 1}, Cmd.none
+    | ResearchUpgraded tech -> 
+        match tech with
+        | Spy -> {state with SpyTecnologyLevel = state.SpyTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Armour -> {state with ArmourTecnologyLevel = state.ArmourTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Weapon -> {state with WeaponTecnologyLevel = state.WeaponTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Defense -> {state with DefenseTecnologyLevel = state.DefenseTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Laser -> {state with LaserTecnologyLevel = state.LaserTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Ion -> {state with IonTecnologyLevel = state.IonTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Plasma -> {state with PlasmaTecnologyLevel = state.PlasmaTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Combustion -> {state with CombustionTecnologyLevel = state.CombustionTecnologyLevel + 1; Researching = None; }, Cmd.none
+        | Impulsion -> {state with ImpulsionTecnologyLevel = state.ImpulsionTecnologyLevel + 1; Researching = None; }, Cmd.none
+    | ResearchUpgrade tech ->
+        match state.Researching with
+        | None -> { state with Researching = Some tech }, Cmd.ofSub (delayed (ResearchUpgraded tech) 1000)
+        | Some -> state, Cmd.none
     | ShipyardBuild -> { state with LightFighterQuantity = state.LightFighterQuantity + 1}, Cmd.none
     | DefenseBuild -> { state with LightLaserTurretQuantity = state.LightLaserTurretQuantity + 1}, Cmd.none
 
+// <COMPONENTS
 let MenuItem (text: string, page: Page,  dispatch) = Html.div [
     prop.className "menu-item"
     prop.text text
@@ -129,14 +140,14 @@ let Menu (state: State, dispatch) = Html.div [
         MenuItem ("Overview", Page.Overview, dispatch)
         MenuItem ("Building", Page.Building, dispatch)
         MenuItem ("Research", Page.Research, dispatch)
+        MenuItem ("Galaxy", Page.Galaxy, dispatch)
         MenuItem ("Shipyard", Page.Shipyard, dispatch)
         MenuItem ("Defense", Page.Defense, dispatch)
-        MenuItem ("Galaxy", Page.Galaxy, dispatch)
     ]
 ]
 
 let Info (state: State, dispatch) = Html.div [
-    prop.className "d-flex app"
+    prop.className "d-flex"
     prop.children [
         Html.span [ 
             prop.className "d-flex-item"
@@ -169,7 +180,7 @@ let Info (state: State, dispatch) = Html.div [
 //JS.console.log (Browser.document)
 
 let Template (state: State, dispatch: Command -> unit, content) = Html.div [
-    prop.className "d-flex"
+    prop.className "d-flex app"
     prop.children [
         Html.div [
             prop.className "d-flex-item sidebar-menu"
@@ -185,6 +196,16 @@ let Template (state: State, dispatch: Command -> unit, content) = Html.div [
         ]
     ]
 ]
+
+let ResearchItem (researching: bool) (dispatch) (name:string) (quantity: int) (tech: Tecnologies) = Html.div [
+    Html.h3 (sprintf "%s %d" name quantity)
+    Html.button [
+        prop.text "Research"
+        prop.disabled researching
+        prop.onClick (fun _ -> dispatch (ResearchUpgrade tech))
+    ]
+]
+// COMPONENTS />
 
 let render (state: State) (dispatch: Command -> unit) =
     match state.CurrentPage with
@@ -217,11 +238,24 @@ let render (state: State) (dispatch: Command -> unit) =
     | Page.Overview -> Template(state, dispatch, Html.div [
         Html.h1 "Overview "
         Html.div [
-            Html.div [
+            prop.className "planet-wrapper"
+            prop.children [
+                Html.div [
+                    prop.className "planet"
+                    prop.children [
+                        Html.div [
+                            prop.className "wrap"
+                            prop.children [
+                                Html.div [ prop.className "background" ]
+                                Html.div [ prop.className "clouds" ]
+                            ]
+                        ]
+                    ]
+                ]
+                Html.span (sprintf "%d field" (state.MetalMineLevel + state.CrystalMineLevel + state.DeuteriumMineLevel))
+                Html.span "[1:0:1] Location"
+                Html.span "-21C to 19C - Temperature"
             ]
-            Html.span "1 field"
-            Html.span "[1:0:1] Location"
-            Html.span "-21C to 19C - Temperature"
         ]
     ])
     | Page.Building -> Template(state, dispatch, Html.div [
@@ -231,7 +265,7 @@ let render (state: State) (dispatch: Command -> unit) =
             Html.button [
                 prop.text "Upgrade"
                 prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.MetalMine))
+                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.MetalMine))
             ]
         ]
         Html.div [
@@ -239,7 +273,7 @@ let render (state: State) (dispatch: Command -> unit) =
             Html.button [
                 prop.text "Upgrade"
                 prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.CrystalMine))
+                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.CrystalMine))
             ]
         ]
         Html.div [
@@ -247,7 +281,7 @@ let render (state: State) (dispatch: Command -> unit) =
             Html.button [
                 prop.text "Upgrade"
                 prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.DeuteriumMine))
+                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.DeuteriumMine))
             ]
         ]
         Html.div [
@@ -255,7 +289,7 @@ let render (state: State) (dispatch: Command -> unit) =
             Html.button [
                 prop.text "Upgrade"
                 prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.Research))
+                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.Research))
             ]
         ]
         Html.div [
@@ -263,7 +297,7 @@ let render (state: State) (dispatch: Command -> unit) =
             Html.button [
                 prop.text "Upgrade"
                 prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildUpgrade Builds.Shipyard))
+                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.Shipyard))
             ]
         ]
     ])
@@ -271,18 +305,20 @@ let render (state: State) (dispatch: Command -> unit) =
         Html.h1 "Research"
         if state.ResearchLevel > 0 then
             Html.div [
-                Html.h3 (sprintf "Spy tecnology %d" state.SpyTecnologyLevel)
-                Html.button [
-                    prop.text "Research"
-                    //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
-                    prop.onClick (fun _ -> dispatch (ResearchUpgrade Tecnologies.Spy))
-                ]
+                ResearchItem state.Researching.IsSome dispatch "Spy tecnology" state.SpyTecnologyLevel Tecnologies.Spy
+                ResearchItem state.Researching.IsSome dispatch "Armour tecnology" state.ArmourTecnologyLevel Tecnologies.Armour
+                ResearchItem state.Researching.IsSome dispatch "Weapon tecnology" state.WeaponTecnologyLevel Tecnologies.Weapon
+                ResearchItem state.Researching.IsSome dispatch "Defense tecnology" state.DefenseTecnologyLevel Tecnologies.Defense
+                ResearchItem state.Researching.IsSome dispatch "Laser tecnology" state.LaserTecnologyLevel Tecnologies.Laser
+                ResearchItem state.Researching.IsSome dispatch "Ion tecnology" state.IonTecnologyLevel Tecnologies.Ion
+                ResearchItem state.Researching.IsSome dispatch "Plasma tecnology" state.PlasmaTecnologyLevel Tecnologies.Plasma
+                ResearchItem state.Researching.IsSome dispatch "Combustion tecnology" state.CombustionTecnologyLevel Tecnologies.Combustion
+                ResearchItem state.Researching.IsSome dispatch "Impulsion tecnology" state.ImpulsionTecnologyLevel Tecnologies.Impulsion
             ]
         else
-            Html.h2 "O laboratorio nao foi construido"
+            Html.h2 "O laboratório não foi construído!"
     ])
     | Page.Shipyard -> Template(state, dispatch, Html.div [
-        Html.h1 "Shipyard"
         Html.h1 (sprintf "Shipyard %d" state.ShipyardLevel)
         if state.ShipyardLevel > 0 then
             Html.div [
@@ -294,7 +330,7 @@ let render (state: State) (dispatch: Command -> unit) =
                 ]
             ]
         else
-            Html.h2 "Não tem o estaleiro ainda"
+            Html.h2 "O estaleiro ainda não foi construído!"
     ])
     | Page.Defense -> Template(state, dispatch, Html.div [
         Html.h1 "Defense"
@@ -310,7 +346,9 @@ let render (state: State) (dispatch: Command -> unit) =
         else
             Html.h2 "Construa um estaleiro e desenvolva tecnologia!"
     ])
-    | Page.Galaxy -> Html.h1 "Galaxy"
+    | Page.Galaxy -> Template(state, dispatch, Html.div [
+        Html.h1 "Galaxy"
+    ])
 
 
 
