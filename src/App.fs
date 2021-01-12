@@ -4,7 +4,6 @@ open Elmish
 open Elmish.React
 open Feliz
 open Feliz.Router
-
 open Fable.Core 
 // APP
 
@@ -78,17 +77,18 @@ let init() = {
     LightFighterQuantity = 0; LightLaserTurretQuantity = 0;
     Building = None; Researching = None; }, Cmd.none
 
-let update (command: Command) (state: State) = 
-// ToDo - delayed pode ser alterado para delayedDispatchCommand -> para receber um Command para dispatch com delay também passado por parametro
-    let delayed (command) (time: int) =
-        let fn (dispatch: Command -> unit): unit = 
-            let tick = async {
-                do! Async.Sleep time
-                dispatch command
-            }
-            Async.StartImmediate tick
-        fn
+// <GLOBAL HELPERS
+let delayed (command) (time: int) =
+    let fn (dispatch: Command -> unit): unit = 
+        let tick = async {
+            do! Async.Sleep time
+            dispatch command
+        }
+        Async.StartImmediate tick
+    fn
+// GLOBAL HELPERS />
 
+let update (command: Command) (state: State) = 
     match command with
     // ToDo -> verificar uma forma de with multiplos atributos de um record
     | Tick -> {state with 
@@ -149,35 +149,48 @@ let Menu (state: State, dispatch) = Html.div [
 let Info (state: State, dispatch) = Html.div [
     prop.className "d-flex"
     prop.children [
-        Html.span [ 
+        Html.div [ 
             prop.className "d-flex-item"
-            prop.text (sprintf "Metal %d" state.Metal)
+            prop.children [
+                Html.span [
+                    prop.className "d-block"
+                    prop.text state.Metal
+                ]
+                Html.span [
+                    prop.className "d-block"
+                    prop.text "Metal"
+                ]
+            ]
         ]
-        Html.span [
+        Html.div [ 
             prop.className "d-flex-item"
-            prop.text (sprintf "Crystal %d" state.Crystal)
+            prop.children [
+                Html.span [
+                    prop.className "d-block"
+                    prop.text state.Crystal
+                ]
+                Html.span [
+                    prop.className "d-block"
+                    prop.text "Crystal"
+                ]
+            ]
         ]
-        Html.span [
+        Html.div [ 
             prop.className "d-flex-item"
-            prop.text (sprintf "Deuterium %d" state.Deuterium)
+            prop.children [
+                Html.span [
+                    prop.className "d-block"
+                    prop.text state.Deuterium
+                ]
+                Html.span [
+                    prop.className "d-block"
+                    prop.text "Deuterium"
+                ]
+            ]
         ]
     ]
 ]
 
-// Link: https://dev.to/semuserable/starting-with-fable-f-kbi
-//type FrameRequestCallback = Func<float,unit>
-// interface
-//type Window =
-//    // function description
-//    abstract alert: ?message: string -> unit
-//    abstract requestAnimationFrame:  callback:FrameRequestCallback -> float
-
-// wiring-up JavaScript and F# with [<Global>] and jsNative
-//let [<Global>] window: Window = jsNative
-
-// client calls
-//window.alert ("Global Fable window.alert")
-//JS.console.log (Browser.document)
 
 let Template (state: State, dispatch: Command -> unit, content) = Html.div [
     prop.className "d-flex app"
@@ -218,7 +231,7 @@ let render (state: State) (dispatch: Command -> unit) =
                     prop.className "wrapper-login"
                     prop.children [
                         Html.h1 "OGame"
-                        Html.h2 "Clone with F#"
+                        Html.h2 "Remake with F#"
                         Html.input [
                             prop.placeholder "Username"
                             prop.required true
@@ -236,25 +249,38 @@ let render (state: State) (dispatch: Command -> unit) =
             ]
         ]
     | Page.Overview -> Template(state, dispatch, Html.div [
-        Html.h1 "Overview "
-        Html.div [
-            prop.className "planet-wrapper"
-            prop.children [
-                Html.div [
-                    prop.className "planet"
-                    prop.children [
-                        Html.div [
-                            prop.className "wrap"
-                            prop.children [
-                                Html.div [ prop.className "background" ]
-                                Html.div [ prop.className "clouds" ]
+        prop.className "d-flex d-flex-column"
+        prop.children [
+            Html.h1 "Overview "
+            Html.div [
+                prop.className "planet-wrapper"
+                prop.children [
+                    Html.div [
+                        prop.className "planet"
+                        prop.children [
+                            Html.div [
+                                prop.className "wrap"
+                                prop.children [
+                                    Html.div [ prop.className "background" ]
+                                    Html.div [ prop.className "clouds" ]
+                                ]
                             ]
                         ]
                     ]
+                   
                 ]
-                Html.span (sprintf "%d field" (state.MetalMineLevel + state.CrystalMineLevel + state.DeuteriumMineLevel))
-                Html.span "[1:0:1] Location"
-                Html.span "-21C to 19C - Temperature"
+            ]
+            Html.span [ 
+                prop.className "text-center"
+                prop.text (sprintf "Planet with %d fields" (state.MetalMineLevel + state.CrystalMineLevel + state.DeuteriumMineLevel)) 
+            ]
+            Html.span [
+                prop.className "text-center"
+                prop.text "Location on [1:0:1]"
+            ]
+            Html.span [
+                prop.className "text-center"
+                prop.text "Temperature -21C to 19C"
             ]
         ]
     ])
@@ -350,6 +376,26 @@ let render (state: State) (dispatch: Command -> unit) =
         Html.h1 "Galaxy"
     ])
 
+Program.mkProgram init update render
+|> Program.withReactSynchronous "elmish-app"
+|> Program.run
+
+
+
+// Link: https://dev.to/semuserable/starting-with-fable-f-kbi
+//type FrameRequestCallback = Func<float,unit>
+// interface
+//type Window =
+//    // function description
+//    abstract alert: ?message: string -> unit
+//    abstract requestAnimationFrame:  callback:FrameRequestCallback -> float
+
+// wiring-up JavaScript and F# with [<Global>] and jsNative
+//let [<Global>] window: Window = jsNative
+
+// client calls
+//window.alert ("Global Fable window.alert")
+//JS.console.log (Browser.document)
 
 
 // Link: https://fable.io/fable-graphics/samples/pixi/basic/index.html
@@ -368,8 +414,3 @@ let render (state: State) (dispatch: Command -> unit) =
 
 //// start animating
 //animate 0.
-
-
-Program.mkProgram init update render
-|> Program.withReactSynchronous "elmish-app"
-|> Program.run
