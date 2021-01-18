@@ -1,0 +1,341 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Fable</title>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="fable.ico" />
+    <style>
+        :root {
+            --blue-gray-800: #37474F;
+            --gray-800: #424242;
+            --gray-900: #212121;
+        }
+
+        --reset *,
+        *:before,
+        *:after {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-image: radial-gradient(circle at center, #899dc4, #495d84);
+            background: radial-gradient(ellipse at bottom, #1b2735, #090a0f);
+            background-repeat: no-repeat;
+            background-size: cover;
+            color: #F5F5F5;
+            font-family: sans-serif;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            padding: 0;
+            text-rendering: optimizelegibility;
+            width: 100vw;
+        }
+
+        input[type="text"]:focus,
+        button:focus {
+            outline: none;
+            -webkit-box-shadow: none;
+            -moz-box-shadow: none;
+            box-shadow: none;
+        }
+
+        /*  body {
+            background-color: #1d272f;
+            color: #bfccd6;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }*/
+
+        .login-wrapper {
+            display: flex;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login {
+            background-color: var(--blue-gray-800);
+            /*box-shadow: 0 4px 80px rgba(0, 0, 0, 0.25);*/
+            margin: auto;
+            padding: 32px;
+            width: 400px;
+        }
+
+            .login input {
+                background-color: #212d36;
+                border: 1px solid #ccc;
+                border-color: #1b262d;
+                border-radius: 6px;
+                color: #fff;
+                display: block;
+                font-size: 32px;
+            }
+
+            .login button {
+                background-color: #ffffff12;
+                border: 1px solid transparent;
+                color: #fff;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: 400;
+                line-height: 1.333;
+                padding: 10px 16px;
+                text-align: center;
+            }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed
+        }
+    </style>
+
+    <!-- Layout inside -->
+    <style>
+        .d-block { display: block; }
+        .d-flex { display: flex; }
+        .d-flex-column { flex-direction: column; }
+        .d-flex-item { flex-grow: 1; }
+        .text-center { text-align: center; }
+
+
+        /* 1. Sidebar */
+        .sidebar-menu {
+            padding: 20px;
+            color: white;
+        }
+
+            .sidebar-menu .menu {
+                background-color: var(--gray-900);
+                padding: 7px;
+                width: 200px;
+            }
+
+                .sidebar-menu .menu .menu-item {
+                    background-color: var(--gray-800);
+                    margin: 5px 1px;
+                    padding: 10px 15px;
+                    text-align: right;
+                }
+
+                    .sidebar-menu .menu .menu-item:hover, .menu-item-active {
+                        background: var(--blue-gray-800);
+                        cursor: pointer
+                    }
+
+        /* 2. Content */
+        .content {
+            color: white;
+            height: 100vh;
+            overflow-y: auto;
+            width: 50%;
+        }
+
+            .content h1 {
+                font-size: 42px;
+                margin-left: 20px
+            }
+
+            .content .content-item {
+                margin: 0 auto;
+                text-align: center;
+            }
+
+        /* 3. Sidebar info */
+        .sidebar-info {
+            color: white;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+
+        /* Media query mobile */
+        @media only screen and (max-width: 500px) {
+            .app {
+                flex-direction: column-reverse;
+                flex-grow: 1;
+            }
+
+            .sidebar-menu {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                position: absolute;
+                bottom: 0;
+            }
+
+                .sidebar-menu .menu {
+                    display: flex;
+                    flex-direction: row;
+                    width: 100%;
+                    padding: 0;
+                }
+
+                .sidebar-menu .menu-item {
+                    flex-grow: 1;
+                    font-size: 0.7rem;
+                    font-weight: lighter;
+                    height: 150% !important;
+                    margin: 0 1px;
+                    text-rendering: optimizelegibility;
+                }
+
+            .content {
+                width: 100% !important;
+            }
+
+            .sidebar-info {
+                background: var(--gray-900);
+                margin: 0;
+                padding: 20px
+            }
+        }
+    </style>
+
+    <!-- Planet Credit: https://codepen.io/artyom-ivanov/pen/QjOYbO -->
+    <style>
+        .planet-wrapper {
+            margin-top: 25vh;
+            width: 100%;
+        }
+
+        .planet {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 60px -20px rgba(255, 189, 3, 0.72), -14px -15px 40px -10px rgba(255, 238, 191, 0.23);
+            left: 50%;
+            top: 50%;
+            margin: 0 auto;
+        }
+
+            .planet .mask {
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                box-shadow: inset -10px -10px 40px #251303, inset 10px 10px 30px -10px rgba(255, 204, 159, 0.6);
+                border-radius: 50%;
+            }
+
+            .planet .background {
+                animation: translateBackground 40s infinite linear;
+                background: url(http://artem.anmedio.ru/dev/planet/mars.jpg) repeat-x;
+                width: 300px;
+                height: 300px;
+                position: absolute;
+                border-radius: 50%;
+            }
+
+            .planet .clouds {
+                background: url(http://artem.anmedio.ru/dev/planet/clouds.png) repeat-x;
+                width: 300px;
+                height: 300px;
+                position: absolute;
+                border-radius: 50%;
+                animation: translateBackground 30s infinite linear;
+                opacity: 0.4;
+            }
+
+            .planet .wrap {
+                width: 300px;
+                height: 300px;
+                position: absolute;
+                border-radius: 50%;
+                animation: rotatePlanet 150s infinite linear;
+            }
+
+        @keyframes translateBackground {
+            0% { background-position-x: 0; }
+            100% { background-position-x: -600px; }
+        }
+
+        @keyframes rotatePlanet {
+            0% { transform: rotateZ(0); }
+            100% { transform: rotateZ(-360deg); }
+        }
+    </style>
+
+    <style>
+        .options {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            flex-wrap:wrap
+        }
+        .option-item {
+            margin: 10px 20px;
+            display: flex;
+            justify-content: space-around;
+            background-color: #212121;
+            width: 500px;
+            height: 150px;
+        }
+
+            .option-item img {
+                width: 150px;
+                height: 100% !important;
+            }
+
+        .option-item-info {
+            width: 350px;
+            padding: 0 10px;
+        }
+
+        .option-item-title {
+            font-size: 26px;
+            line-height: 40px;
+        }
+
+        .option-item-description {
+            display: block;
+            font-size: 16px;
+            line-height: 30px;
+        }
+
+        .option-item-material {
+            display: flex;
+            margin-top: 40px;
+            height: 30px;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+            .option-item-material div {
+                width: 100%;
+            }
+
+                .option-item-material div span {
+                    display: block;
+                    text-align: center;
+                }
+
+                    .option-item-material div span:nth-child(2) {
+                        font-size: 0.75rem;
+                    }
+
+                .option-item-material div button {
+                    height: 100%;
+                    width: 100%;
+                    background-color: #388E3C;
+                    border: 1px solid transparent;
+                    color: #fff;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 400;
+                    text-align: center;
+                }
+
+                    .option-item-material div button:disabled {
+                        background-color: #757575;
+                        cursor: not-allowed;
+                    }
+
+
+    </style>
+</head>
+<body>
+    <div id="elmish-app"></div>
+    <script src="main.js"></script>
+</body>
+</html>
