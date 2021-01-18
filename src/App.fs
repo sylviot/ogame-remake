@@ -361,11 +361,11 @@ let render (state: State) (dispatch: Command -> unit) =
         Html.div [
             prop.className "options"
             prop.children [
-                BuildingItem state dispatch "/images/metal-mine.gif" "Metal mine" (sprintf "%s to level %d"  (getTime <| float (timeToBuild state.MetalMineLevel)) ((+)state.MetalMineLevel 1)) Builds.MetalMine (buildingMaterialCost 60 48 0 state.MetalMineLevel)
-                BuildingItem state dispatch "/images/crystal-mine.gif" "Crystal mine" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.CrystalMineLevel)) ((+)state.CrystalMineLevel 1)) Builds.CrystalMine (buildingMaterialCost 48 24 0 state.CrystalMineLevel)
-                BuildingItem state dispatch "/images/deuterium-refinery.gif" "Deuterium mine" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.DeuteriumMineLevel)) ((+)state.DeuteriumMineLevel 1)) Builds.DeuteriumMine (buildingMaterialCost 225 75 0 state.DeuteriumMineLevel)
-                BuildingItem state dispatch "/images/shipyard.gif" "Shipyard lab" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.ShipyardLevel)) ((+)state.ShipyardLevel 1)) Builds.Shipyard (buildingMaterialCost 200 400 200 state.ShipyardLevel)
-                BuildingItem state dispatch "/images/researchlab.gif" "Research lab" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.ResearchLevel)) ((+)state.ResearchLevel 1)) Builds.Research (buildingMaterialCost 200 400 200 state.ResearchLevel)
+                BuildingItem state dispatch "images/metal-mine.gif" "Metal mine" (sprintf "%s to level %d"  (getTime <| float (timeToBuild state.MetalMineLevel)) ((+)state.MetalMineLevel 1)) Builds.MetalMine (buildingMaterialCost 60 48 0 state.MetalMineLevel)
+                BuildingItem state dispatch "images/crystal-mine.gif" "Crystal mine" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.CrystalMineLevel)) ((+)state.CrystalMineLevel 1)) Builds.CrystalMine (buildingMaterialCost 48 24 0 state.CrystalMineLevel)
+                BuildingItem state dispatch "images/deuterium-refinery.gif" "Deuterium mine" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.DeuteriumMineLevel)) ((+)state.DeuteriumMineLevel 1)) Builds.DeuteriumMine (buildingMaterialCost 225 75 0 state.DeuteriumMineLevel)
+                BuildingItem state dispatch "images/shipyard.gif" "Shipyard lab" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.ShipyardLevel)) ((+)state.ShipyardLevel 1)) Builds.Shipyard (buildingMaterialCost 200 400 200 state.ShipyardLevel)
+                BuildingItem state dispatch "images/researchlab.gif" "Research lab" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.ResearchLevel)) ((+)state.ResearchLevel 1)) Builds.Research (buildingMaterialCost 200 400 200 state.ResearchLevel)
             ]
         ]
     ])
@@ -375,10 +375,10 @@ let render (state: State) (dispatch: Command -> unit) =
             Html.div [
                 prop.className "options"
                 prop.children [
-                    ResearchItem state dispatch "/images/armour-tech.gif" "Armour tecnology" (sprintf "00:01 to level %d" ((+)state.ArmourTecnologyLevel 1)) Tecnologies.Armour
-                    ResearchItem state dispatch "/images/weapon-tech.gif" "Weapon tecnology" (sprintf "00:01 to level %d" ((+)state.WeaponTecnologyLevel 1)) Tecnologies.Weapon
-                    ResearchItem state dispatch "/images/shield-tech.gif" "Shield tecnology" (sprintf "00:01 to level %d" ((+)state.DefenseTecnologyLevel 1)) Tecnologies.Defense
-                    ResearchItem state dispatch "/images/laser-tech.gif" "Laser tecnology" (sprintf "00:01 to level %d" ((+)state.LaserTecnologyLevel 1)) Tecnologies.Laser
+                    ResearchItem state dispatch "images/armour-tech.gif" "Armour tecnology" (sprintf "00:01 to level %d" ((+)state.ArmourTecnologyLevel 1)) Tecnologies.Armour
+                    ResearchItem state dispatch "images/weapon-tech.gif" "Weapon tecnology" (sprintf "00:01 to level %d" ((+)state.WeaponTecnologyLevel 1)) Tecnologies.Weapon
+                    ResearchItem state dispatch "images/shield-tech.gif" "Shield tecnology" (sprintf "00:01 to level %d" ((+)state.DefenseTecnologyLevel 1)) Tecnologies.Defense
+                    ResearchItem state dispatch "images/laser-tech.gif" "Laser tecnology" (sprintf "00:01 to level %d" ((+)state.LaserTecnologyLevel 1)) Tecnologies.Laser
                 ]
             ]
         else
