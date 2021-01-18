@@ -7,6 +7,9 @@ open Feliz.Router
 open Fable.Core 
 // APP
 
+[<Literal>]
+let Speed = 1.5
+
 type Page =
     | Home
     | Overview
@@ -14,7 +17,6 @@ type Page =
     | Research
     | Shipyard
     | Defense
-    | Galaxy
 
 type Builds =
     | MetalMine
@@ -42,6 +44,7 @@ type Defenses =
 
 type Command =
     | Tick
+    | SetUsername of string
     | SwitchPage of Page
     | BuildingUpgrade of Builds
     | BuildingUpgraded of Builds
@@ -50,8 +53,10 @@ type Command =
     | ShipyardBuild of Ships
     | DefenseBuild of Defenses
 
+type MaterialCost = {Metal: int; Crystal: int; Deuterium: int;}
 
 type State = { CurrentPage: Page; 
+    Username: string;
     Metal: int; Crystal: int; Deuterium: int;
     MetalMineLevel: int; CrystalMineLevel: int; DeuteriumMineLevel: int;
     ResearchLevel: int; 
@@ -66,6 +71,7 @@ type State = { CurrentPage: Page;
 
 let init() = { 
     CurrentPage = Home;
+    Username = "sylviot";
     Metal = 0; Crystal = 0; Deuterium = 0;
     MetalMineLevel =  1; CrystalMineLevel = 1; DeuteriumMineLevel = 1;
     ResearchLevel = 0;
@@ -86,15 +92,23 @@ let delayed (command) (time: int) =
         }
         Async.StartImmediate tick
     fn
+
+let buildingMaterialCost (metal: int) (crystal: int) (deuterium: int) (level: int) =
+    let costToBuild = pown Speed level |> int
+    {Metal = (*) metal costToBuild; Crystal = (*) crystal costToBuild; Deuterium = (*) deuterium costToBuild;}
+
+let timeToBuild (level: int) =
+    level * 1000
 // GLOBAL HELPERS />
 
 let update (command: Command) (state: State) = 
     match command with
     // ToDo -> verificar uma forma de with multiplos atributos de um record
     | Tick -> {state with 
-        Metal = state.Metal + 100 + state.MetalMineLevel * 10;
+        Metal = state.Metal + (30 *state.MetalMineLevel * int (pown 1.1 state.MetalMineLevel));
         Crystal = state.Crystal + 100 + state.CrystalMineLevel * 10;
         Deuterium = state.Deuterium + 100 + state.DeuteriumMineLevel * 10;}, Cmd.ofSub (delayed Tick 1000)
+    | SetUsername value -> { state with Username = value }, Cmd.none
     | SwitchPage nextPage ->
         match nextPage with
         | Overview -> { state with CurrentPage = nextPage }, Cmd.ofSub (delayed Tick 1000)
@@ -108,7 +122,13 @@ let update (command: Command) (state: State) =
         | Shipyard -> { state with ShipyardLevel = state.ShipyardLevel + 1; Building = None }, Cmd.none
     | BuildingUpgrade build -> 
         match state.Building with
-        | None -> { state with Building = Some build }, Cmd.ofSub (delayed (BuildingUpgraded build) 1000)
+        | None -> 
+            match build with
+            | Builds.MetalMine -> { state with Building = Some build }, Cmd.ofSub (delayed (BuildingUpgraded build) (timeToBuild state.MetalMineLevel))
+            | Builds.CrystalMine -> { state with Building = Some build }, Cmd.ofSub (delayed (BuildingUpgraded build) (timeToBuild state.CrystalMineLevel))
+            | Builds.DeuteriumMine -> { state with Building = Some build }, Cmd.ofSub (delayed (BuildingUpgraded build) (timeToBuild state.DeuteriumMineLevel))
+            | Builds.Shipyard -> { state with Building = Some build }, Cmd.ofSub (delayed (BuildingUpgraded build) (timeToBuild state.ShipyardLevel))
+            | Builds.Research -> { state with Building = Some build }, Cmd.ofSub (delayed (BuildingUpgraded build) (timeToBuild state.ResearchLevel))
         | Some -> state, Cmd.none
     | ResearchUpgraded tech -> 
         match tech with
@@ -129,7 +149,7 @@ let update (command: Command) (state: State) =
     | DefenseBuild -> { state with LightLaserTurretQuantity = state.LightLaserTurretQuantity + 1}, Cmd.none
 
 // <COMPONENTS
-let MenuItem (text: string, page: Page,  dispatch) = Html.div [
+let MenuItem (text: string, page: Page, (state: State), dispatch) = Html.div [
     prop.className "menu-item"
     prop.text text
     prop.onClick (fun _ -> dispatch (SwitchPage page))
@@ -137,12 +157,11 @@ let MenuItem (text: string, page: Page,  dispatch) = Html.div [
 let Menu (state: State, dispatch) = Html.div [
     prop.className "menu"
     prop.children [
-        MenuItem ("Overview", Page.Overview, dispatch)
-        MenuItem ("Building", Page.Building, dispatch)
-        MenuItem ("Research", Page.Research, dispatch)
-        MenuItem ("Galaxy", Page.Galaxy, dispatch)
-        MenuItem ("Shipyard", Page.Shipyard, dispatch)
-        MenuItem ("Defense", Page.Defense, dispatch)
+        MenuItem ("Overview", Page.Overview, state, dispatch)
+        MenuItem ("Building", Page.Building, state, dispatch)
+        MenuItem ("Research", Page.Research, state, dispatch)
+        MenuItem ("Shipyard", Page.Shipyard, state, dispatch)
+        MenuItem ("Defense", Page.Defense, state, dispatch)
     ]
 ]
 
@@ -210,38 +229,92 @@ let Template (state: State, dispatch: Command -> unit, content) = Html.div [
     ]
 ]
 
-let ResearchItem (researching: bool) (dispatch) (name:string) (quantity: int) (tech: Tecnologies) = Html.div [
-    Html.h3 (sprintf "%s %d" name quantity)
-    Html.button [
-        prop.text "Research"
-        prop.disabled researching
-        prop.onClick (fun _ -> dispatch (ResearchUpgrade tech))
+let Item (image: string) (name: string) (description: string) (metal: int) (crystal: int) (deuterium: int) actionButton = Html.div [
+    prop.className "option-item"
+    prop.children [
+        Html.img [ prop.src image ]
+        Html.div [
+            prop.className "option-item-info"
+            prop.children [
+                Html.span [
+                    prop.className "option-item-title"
+                    prop.text name
+                ]
+                Html.span [
+                    prop.className "option-item-description"
+                    prop.text description
+                ]
+                Html.div [
+                    prop.className "option-item-material"
+                    prop.children [
+                        Html.div [
+                            Html.span metal
+                            Html.span "Metal"
+                        ]
+                        Html.div [
+                            Html.span crystal
+                            Html.span "Crystal"
+                        ]
+                        Html.div [
+                            Html.span deuterium
+                            Html.span "Deuterium"
+                        ]
+                        actionButton
+                    ]
+                ]
+            ]
+        ]
     ]
 ]
+
+let BuildingItem (state: State) (dispatch: Command -> unit) (image: string) (name: string) (description: string) (building: Builds) (material: MaterialCost) = 
+    let button = Html.div [
+        Html.button [
+            prop.text "Evolve"
+            prop.disabled state.Building.IsSome
+            prop.onClick (fun _ -> dispatch (Command.BuildingUpgrade building))
+        ]
+    ]
+    Item image name description material.Metal material.Crystal material.Deuterium button
+
+
+let ResearchItem (state: State) (dispatch: Command -> unit) (image: string) (name: string) (description: string) (tech: Tecnologies) =
+    let button = Html.div [
+        Html.button [
+            prop.text "Evolve"
+            prop.disabled state.Researching.IsSome
+            prop.onClick (fun _ -> dispatch (ResearchUpgrade tech))
+        ]
+    ]
+    Item image name description 0 0 0 button
+
+let getTime (value: float) : string =
+    let d = System.TimeSpan.FromMilliseconds value
+    (int d.TotalMinutes).ToString("00") + ":" + (d.TotalSeconds % 60.0).ToString("00")
 // COMPONENTS />
 
 let render (state: State) (dispatch: Command -> unit) =
     match state.CurrentPage with
     | Page.Home -> 
         Html.div [
-            prop.className "wrapper"
+            prop.className "login-wrapper"
             prop.children [
                 Html.form [
                     prop.onSubmit (fun _ -> dispatch (SwitchPage Page.Overview))
-                    prop.className "wrapper-login"
+                    prop.className "login"
                     prop.children [
                         Html.h1 "OGame"
                         Html.h2 "Remake with F#"
                         Html.input [
+                            prop.autoFocus true
                             prop.placeholder "Username"
                             prop.required true
-                            prop.valueOrDefault "sylviot"
-                            //prop.onChange (fun _ -> SetUsernameInput >> dispacth)
+                            prop.onChange (fun value -> dispatch (SetUsername value))
                         ]
                         Html.button [
                             prop.className "btn btn-primary"
                             prop.type' "submit"
-                            //prop.onClick (fun _ -> dispatch (SwitchPage Page.Overview))
+                            prop.disabled (System.String.IsNullOrEmpty state.Username)
                             prop.text "Start game"
                         ]
                     ]
@@ -267,7 +340,6 @@ let render (state: State) (dispatch: Command -> unit) =
                             ]
                         ]
                     ]
-                   
                 ]
             ]
             Html.span [ 
@@ -287,43 +359,13 @@ let render (state: State) (dispatch: Command -> unit) =
     | Page.Building -> Template(state, dispatch, Html.div [
         Html.h1 "Building"
         Html.div [
-            Html.h3 (sprintf "Metal mine %d" state.MetalMineLevel)
-            Html.button [
-                prop.text "Upgrade"
-                prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.MetalMine))
-            ]
-        ]
-        Html.div [
-            Html.h3 (sprintf "Crystal mine %d" state.CrystalMineLevel)
-            Html.button [
-                prop.text "Upgrade"
-                prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.CrystalMine))
-            ]
-        ]
-        Html.div [
-            Html.h3 (sprintf "Deuterium mine %d" state.DeuteriumMineLevel)
-            Html.button [
-                prop.text "Upgrade"
-                prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.DeuteriumMine))
-            ]
-        ]
-        Html.div [
-            Html.h3 (sprintf "Research %d" state.ResearchLevel)
-            Html.button [
-                prop.text "Upgrade"
-                prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.Research))
-            ]
-        ]
-        Html.div [
-            Html.h3 (sprintf "Shipyard %d" state.ShipyardLevel)
-            Html.button [
-                prop.text "Upgrade"
-                prop.disabled state.Building.IsSome
-                prop.onClick (fun _ -> dispatch (BuildingUpgrade Builds.Shipyard))
+            prop.className "options"
+            prop.children [
+                BuildingItem state dispatch "/images/metal-mine.gif" "Metal mine" (sprintf "%s to level %d"  (getTime <| float (timeToBuild state.MetalMineLevel)) ((+)state.MetalMineLevel 1)) Builds.MetalMine (buildingMaterialCost 60 48 0 state.MetalMineLevel)
+                BuildingItem state dispatch "/images/crystal-mine.gif" "Crystal mine" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.CrystalMineLevel)) ((+)state.CrystalMineLevel 1)) Builds.CrystalMine (buildingMaterialCost 48 24 0 state.CrystalMineLevel)
+                BuildingItem state dispatch "/images/deuterium-refinery.gif" "Deuterium mine" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.DeuteriumMineLevel)) ((+)state.DeuteriumMineLevel 1)) Builds.DeuteriumMine (buildingMaterialCost 225 75 0 state.DeuteriumMineLevel)
+                BuildingItem state dispatch "/images/shipyard.gif" "Shipyard lab" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.ShipyardLevel)) ((+)state.ShipyardLevel 1)) Builds.Shipyard (buildingMaterialCost 200 400 200 state.ShipyardLevel)
+                BuildingItem state dispatch "/images/researchlab.gif" "Research lab" (sprintf "%s to level %d" (getTime <| float (timeToBuild state.ResearchLevel)) ((+)state.ResearchLevel 1)) Builds.Research (buildingMaterialCost 200 400 200 state.ResearchLevel)
             ]
         ]
     ])
@@ -331,49 +373,30 @@ let render (state: State) (dispatch: Command -> unit) =
         Html.h1 "Research"
         if state.ResearchLevel > 0 then
             Html.div [
-                ResearchItem state.Researching.IsSome dispatch "Spy tecnology" state.SpyTecnologyLevel Tecnologies.Spy
-                ResearchItem state.Researching.IsSome dispatch "Armour tecnology" state.ArmourTecnologyLevel Tecnologies.Armour
-                ResearchItem state.Researching.IsSome dispatch "Weapon tecnology" state.WeaponTecnologyLevel Tecnologies.Weapon
-                ResearchItem state.Researching.IsSome dispatch "Defense tecnology" state.DefenseTecnologyLevel Tecnologies.Defense
-                ResearchItem state.Researching.IsSome dispatch "Laser tecnology" state.LaserTecnologyLevel Tecnologies.Laser
-                ResearchItem state.Researching.IsSome dispatch "Ion tecnology" state.IonTecnologyLevel Tecnologies.Ion
-                ResearchItem state.Researching.IsSome dispatch "Plasma tecnology" state.PlasmaTecnologyLevel Tecnologies.Plasma
-                ResearchItem state.Researching.IsSome dispatch "Combustion tecnology" state.CombustionTecnologyLevel Tecnologies.Combustion
-                ResearchItem state.Researching.IsSome dispatch "Impulsion tecnology" state.ImpulsionTecnologyLevel Tecnologies.Impulsion
-            ]
-        else
-            Html.h2 "O laboratório não foi construído!"
-    ])
-    | Page.Shipyard -> Template(state, dispatch, Html.div [
-        Html.h1 (sprintf "Shipyard %d" state.ShipyardLevel)
-        if state.ShipyardLevel > 0 then
-            Html.div [
-                Html.h3 (sprintf "Light Fighter %d" state.LightFighterQuantity)
-                Html.button [
-                    prop.text "Build"
-                    //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
-                    prop.onClick (fun _ -> dispatch (ShipyardBuild Ships.LightFighter))
+                prop.className "options"
+                prop.children [
+                    ResearchItem state dispatch "/images/armour-tech.gif" "Armour tecnology" (sprintf "00:01 to level %d" ((+)state.ArmourTecnologyLevel 1)) Tecnologies.Armour
+                    ResearchItem state dispatch "/images/weapon-tech.gif" "Weapon tecnology" (sprintf "00:01 to level %d" ((+)state.WeaponTecnologyLevel 1)) Tecnologies.Weapon
+                    ResearchItem state dispatch "/images/shield-tech.gif" "Shield tecnology" (sprintf "00:01 to level %d" ((+)state.DefenseTecnologyLevel 1)) Tecnologies.Defense
+                    ResearchItem state dispatch "/images/laser-tech.gif" "Laser tecnology" (sprintf "00:01 to level %d" ((+)state.LaserTecnologyLevel 1)) Tecnologies.Laser
                 ]
             ]
         else
-            Html.h2 "O estaleiro ainda não foi construído!"
+            Html.h2 "The reaserach lab not built yet!"
+    ])
+    | Page.Shipyard -> Template(state, dispatch, Html.div [
+        Html.h1 "Shipyard"
+        if state.ShipyardLevel > 0 then
+            Html.h2 "This is an example only! :)"
+        else
+            Html.h2 "The shipyard is not built yet!"
     ])
     | Page.Defense -> Template(state, dispatch, Html.div [
         Html.h1 "Defense"
         if state.ShipyardLevel > 0 && state.ResearchLevel > 0 then
-            Html.div [
-                Html.h3 (sprintf "Light Laser Turret %d" state.LightLaserTurretQuantity)
-                Html.button [
-                    prop.text "Build"
-                    //prop.disabled state.Researching.IsSome // ToDo - adicionar o delayed para que funcione
-                    prop.onClick (fun _ -> dispatch (DefenseBuild Defenses.LightLaserTurret))
-                ]
-            ]
+            Html.h2 "This is an example only! :)"
         else
-            Html.h2 "Construa um estaleiro e desenvolva tecnologia!"
-    ])
-    | Page.Galaxy -> Template(state, dispatch, Html.div [
-        Html.h1 "Galaxy"
+            Html.h2 "Build shipyard and research new technologies!"
     ])
 
 Program.mkProgram init update render
