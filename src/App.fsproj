@@ -3,7 +3,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-      <Compile Include="./pages/Home.fs" />
       <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>
