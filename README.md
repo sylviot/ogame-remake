@@ -4,6 +4,12 @@ O OGame era um popular jogo de navegador, tive a oportunidade de jogar bastante 
 
 [Link para jogar](https://sylviot.github.io/ogame-remake/dist/index.html)
 
+## Original vs Remake
+Essa é uma imagem do OGame no navedaor.
+<img src="dist/images/original.jpeg" />
+
+No remake tentei fazer algo mais simples porém funcional em navegadores com responsividade.
+<img src="dist/images/remake.png" />
 
 ## Tecnologias
 
